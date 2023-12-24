@@ -5,9 +5,14 @@ const { ccclass, property } = _decorator;
 enum EventType {
     /**
      * Dispatched when Joystick move
-     * @param degree: direction in degrees, with positive X-axis as 0, increasing in a counter-clockwise direction.
+     * @param direction-Vec3: direction in vector 3
      */
-    JOYSTICK_MOVE = "Joystick.JOYSTICK_MOVE"
+    JOYSTICK_MOVE = "Joystick.JOYSTICK_MOVE",
+
+    /**
+     * Dispatched when Joystick stop moving
+     */
+    JOYSTICK_STOP = "Joystick.JOYSTICK_STOP"
 }
 
 @ccclass('UI_Joystick')
@@ -27,8 +32,8 @@ export class UI_Joystick extends Component {
         let checkerMovement = this.node.getChildByName('Checker Movement');
         checkerMovement.on(Input.EventType.TOUCH_START, this.OnTouchStart_Movement, this);
         checkerMovement.on(Input.EventType.TOUCH_MOVE, this.OnTouchMove_Movement, this);
-        // checkerMovement.on(Input.EventType.TOUCH_END, this.OnTouchUp_Movement, this);
-        // checkerMovement.on(Input.EventType.TOUCH_CANCEL, this.OnTouchUp_Movement, this);
+        checkerMovement.on(Input.EventType.TOUCH_END, this.OnTouchUp_Movement, this);
+        checkerMovement.on(Input.EventType.TOUCH_CANCEL, this.OnTouchUp_Movement, this);
 
         this._ctrlRoot = this.node.getChildByName('Control').getComponent(UITransform);
         this._ctrlRoot.node.active = false;
@@ -98,23 +103,30 @@ export class UI_Joystick extends Component {
 
                 }
                 //set the pointer position
-                this._ctrlPointer.setPosition(posTouch);
+                checkerCameraUIComp.convertToWorldSpaceAR(posTouch, posTouch);
+                this._ctrlPointer.setWorldPosition(posTouch);
 
-                // degree 0 ~ 360 based on x axis.
-                let degree = Math.atan(direction.y / direction.x) / Math.PI * 180;
-                if (direction.x < 0) {
-                    degree += 180;
-                }
-                else {
-                    degree += 360;
-                }
+                // degree 0 ~ 360 based on y axis.
+                // let degree = Math.atan(direction.x / direction.y) / Math.PI * 180;
+                // if (direction.x < 0) {
+                //     degree += 180;
+                // }
+                // else {
+                //     degree += 360;
+                // }
 
-                console.log(degree);
-
-                director.getScene().emit(UI_Joystick.EventType.JOYSTICK_MOVE, degree);
+                director.getScene().emit(UI_Joystick.EventType.JOYSTICK_MOVE, new Vec3(-direction.x, 0, direction.y).normalize());
+                // director.getScene().emit(UI_Joystick.EventType.JOYSTICK_MOVE, degree);
             }
         }
     }
+
+    private OnTouchUp_Movement() {
+        this._ctrlRoot.node.active = false;
+        this._movementTouch = null;
+
+        director.getScene().emit(UI_Joystick.EventType.JOYSTICK_STOP);
+    };
     // #endregion
 
     protected onDestroy(): void {
@@ -123,8 +135,8 @@ export class UI_Joystick extends Component {
         let checkerMovement = this.node.getChildByName('Checker Movement');
         checkerMovement.off(Input.EventType.TOUCH_START, this.OnTouchStart_Movement, this);
         checkerMovement.off(Input.EventType.TOUCH_MOVE, this.OnTouchMove_Movement, this);
-        // checkerMovement.off(Input.EventType.TOUCH_END, this.OnTouchUp_Movement, this);
-        // checkerMovement.off(Input.EventType.TOUCH_CANCEL, this.OnTouchUp_Movement, this);
+        checkerMovement.off(Input.EventType.TOUCH_END, this.OnTouchUp_Movement, this);
+        checkerMovement.off(Input.EventType.TOUCH_CANCEL, this.OnTouchUp_Movement, this);
     }
 }
 

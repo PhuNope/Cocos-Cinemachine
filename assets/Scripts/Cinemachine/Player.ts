@@ -1,25 +1,50 @@
-import { _decorator, Component, Node, NodeSpace, Quat, Vec3 } from 'cc';
+import { _decorator, Component, director, EventTouch, Node, NodeSpace, Quat, Vec3, Camera, math } from 'cc';
+import { UI_Joystick } from '../UI Joystick/UI_Joystick';
 const { ccclass, property } = _decorator;
 
 @ccclass('Player')
 export class Player extends Component {
-    start() {
-        const quat1 = Quat.fromEuler(new Quat(), 0, 90, 0); // Quat quay góc 90 độ quanh trục y
-        const quat2 = Quat.fromEuler(new Quat(), 0, 45, 0); // Quat quay góc 45 độ quanh trục y
+    @property({
+        type: Node
+    })
+    public cameraNode: Node = null;
 
-        const resultQuat = new Quat();
-        Quat.multiply(resultQuat, quat1, quat2);
+    private movementDirection: Vec3 = null;
 
-        console.log(resultQuat.getEulerAngles(new Vec3()));
+    private quatTurn: Quat = new Quat();
+
+    protected onLoad(): void {
+        director.getScene().on(UI_Joystick.EventType.JOYSTICK_MOVE, this.OnTouchMove_Movement, this);
+        director.getScene().on(UI_Joystick.EventType.JOYSTICK_STOP, this.OnTouchUp_Movement, this);
     }
 
-    update(deltaTime: number) {
-        var rotationQuat = this.node.rotation.clone();
-        Quat.fromEuler(rotationQuat, 0, -180 * deltaTime, 0);
+    start() {
+    }
 
-        Quat.multiply(rotationQuat, this.node.rotation, rotationQuat);
+    private OnTouchMove_Movement(direction: Vec3) {
+        this.movementDirection = direction;
+    }
 
-        this.node.setRotation(Quat.slerp(this.node.rotation, rotationQuat, rotationQuat, 0.01));
+    private Moving() {
+        if (!this.movementDirection) return;
+
+        // turn player
+        this.node.forward = this.movementDirection;
+
+        // this.node.translate(this.node.forward.multiplyScalar(0.1), NodeSpace.WORLD);
+    }
+
+    private OnTouchUp_Movement() {
+        this.movementDirection = null;
+    }
+
+    protected update(dt: number): void {
+        this.Moving();
+    }
+
+    protected onDestroy(): void {
+        director.getScene().off(UI_Joystick.EventType.JOYSTICK_MOVE, this.OnTouchMove_Movement, this);
+        director.getScene().off(UI_Joystick.EventType.JOYSTICK_STOP, this.OnTouchUp_Movement, this);
     }
 }
 
