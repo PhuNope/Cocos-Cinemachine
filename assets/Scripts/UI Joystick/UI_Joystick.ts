@@ -5,7 +5,7 @@ const { ccclass, property } = _decorator;
 enum EventType {
     /**
      * Dispatched when Joystick move
-     * @param direction-Vec3: direction in vector 3
+     * @param direction-Vec2: direction in vector 2
      */
     JOYSTICK_MOVE = "Joystick.JOYSTICK_MOVE",
 
@@ -115,7 +115,7 @@ export class UI_Joystick extends Component {
                 //     degree += 360;
                 // }
 
-                director.getScene().emit(UI_Joystick.EventType.JOYSTICK_MOVE, new Vec3(-direction.x, 0, direction.y).normalize());
+                director.getScene().emit(UI_Joystick.EventType.JOYSTICK_MOVE, direction);
                 // director.getScene().emit(UI_Joystick.EventType.JOYSTICK_MOVE, degree);
             }
         }
